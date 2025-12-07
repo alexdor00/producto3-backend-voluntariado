@@ -1,29 +1,59 @@
+
+
 import express from 'express';
+import cors from 'cors';
+import usuariosRoutes from './routes/usuariosRoutes.js';
+import voluntariadosRoutes from './routes/voluntariadosRoutes.js';
 
 const app = express();
 const PORT = 4000;
 
-// Middleware para parsear JSON
-app.use(express.json());
+// Middlewares
+app.use(cors()); // Permitir peticiones desde otros orígenes
+app.use(express.json()); // Parsear JSON en el body
 
-// Ruta de prueba
+// Rutas de bienvenida
 app.get('/', (req, res) => {
     res.json({ 
-        mensaje: 'Servidor Express funcionando correctamente',
-        proyecto: 'Sistema de Voluntariados - Backend'
+        mensaje: 'API de Voluntariados - Backend funcionando',
+        version: '1.0.0',
+        endpoints: {
+            usuarios: '/api/usuarios',
+            voluntariados: '/api/voluntariados'
+        }
     });
 });
 
-// Ruta de prueba para usuarios
-app.get('/api/test', (req, res) => {
-    res.json({ 
-        status: 'OK',
-        timestamp: new Date().toISOString()
+// Rutas de la API
+app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/voluntariados', voluntariadosRoutes);
+
+// Ruta 404 - No encontrada
+app.use((req, res) => {
+    res.status(404).json({
+        ok: false,
+        mensaje: 'Endpoint no encontrado',
+        ruta: req.url
+    });
+});
+
+// Manejo global de errores
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).json({
+        ok: false,
+        mensaje: 'Error interno del servidor',
+        error: err.message
     });
 });
 
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`Prueba: http://localhost:${PORT}/api/test`);
+    console.log(` Endpoints disponibles:`);
+    console.log(`   - GET  http://localhost:${PORT}/api/usuarios`);
+    console.log(`   - POST http://localhost:${PORT}/api/usuarios`);
+    console.log(`   - POST http://localhost:${PORT}/api/usuarios/login`);
+    console.log(`   - GET  http://localhost:${PORT}/api/voluntariados`);
+    console.log(`   - POST http://localhost:${PORT}/api/voluntariados`);
 });
