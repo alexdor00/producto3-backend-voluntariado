@@ -1,12 +1,14 @@
+// src/graphql/typeDefs.js
+
 /**
- * Definición de tipos y esquema de GraphQL
- * Los Types corresponden a los objetos del producto 2
+ * definicion de tipos y esquema de graphql
+ * los types corresponden a los objetos del producto 2
  */
 
 export const typeDefs = `#graphql
 
-  # Tipo Usuario - Representa un usuario del sistema
- type Usuario {
+  # tipo usuario - representa un usuario del sistema
+  type Usuario {
     id: Int!
     nombre: String!
     email: String!
@@ -14,7 +16,7 @@ export const typeDefs = `#graphql
     rol: String!
   }
 
-  # Tipo Voluntariado - Representa una oferta o petición de voluntariado
+  # tipo voluntariado - representa una oferta o peticion de voluntariado
   type Voluntariado {
     id: Int!
     titulo: String!
@@ -24,34 +26,34 @@ export const typeDefs = `#graphql
     tipo: String!
   }
 
-  # Respuesta genérica para operaciones
+  # respuesta generica para operaciones
   type Respuesta {
     ok: Boolean!
     mensaje: String!
   }
 
-  # Respuesta de login con datos del usuario
+  # respuesta de login con datos del usuario
   type RespuestaLogin {
     ok: Boolean!
     mensaje: String!
     usuario: Usuario
   }
 
-  # QUERIES - Operaciones de lectura (SELECT)
+  # queries - operaciones de lectura (select)
   type Query {
-    # Usuarios
+    # usuarios
     obtenerUsuarios: [Usuario!]!
     obtenerUsuario(email: String!): Usuario
     
-    # Voluntariados
+    # voluntariados
     obtenerVoluntariados: [Voluntariado!]!
     obtenerVoluntariado(id: Int!): Voluntariado
     obtenerVoluntariadosPorTipo(tipo: String!): [Voluntariado!]!
   }
 
-  # MUTATIONS - Operaciones de escritura (INSERT, UPDATE, DELETE)
+  # mutations - operaciones de escritura (insert, update, delete)
   type Mutation {
-    # Usuarios
+    # usuarios
     crearUsuario(
       nombre: String!
       email: String!
@@ -63,7 +65,7 @@ export const typeDefs = `#graphql
     
     loginUsuario(email: String!, password: String!): RespuestaLogin!
     
-    # Voluntariados
+    # voluntariados
     crearVoluntariado(
       titulo: String!
       email: String!

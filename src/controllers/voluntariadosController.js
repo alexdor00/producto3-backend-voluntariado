@@ -1,4 +1,3 @@
-// src/controllers/voluntariadosController.js
 
 import { db } from '../data/dataStore.js';
 

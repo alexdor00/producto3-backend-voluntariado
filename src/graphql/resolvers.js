@@ -1,250 +1,474 @@
+// src/graphql/resolvers.js
 
-
-import { db } from '../data/dataStore.js';
+import { getDB, isMongoConnected } from '../config/database.js';
+import { ObjectId } from 'mongodb';
+import { db as memoryDB } from '../data/dataStore.js';
 
 /**
- * Resolvers de GraphQL - Implementan la lógica de negocio
- * Conectan las operaciones definidas en typeDefs con la base de datos
+ * resolvers de graphql - implementan la logica de negocio
+ * conectan las operaciones definidas en typedefs con mongodb
  */
+
+// helper: usar mongodb o memoria segun disponibilidad
+function usarMongoDB() {
+    return isMongoConnected() && getDB() !== null;
+}
 
 export const resolvers = {
     
-    // QUERIES - Operaciones de lectura
+    // queries - operaciones de lectura
     Query: {
         
         /**
-         * Obtiene todos los usuarios del sistema
-         * @returns {Array} Lista de usuarios
+         * obtiene todos los usuarios del sistema
+         * @returns {Array} lista de usuarios
          */
-        obtenerUsuarios: () => {
-            console.log('[GraphQL Query] obtenerUsuarios');
-            return db.usuarios;
+        obtenerUsuarios: async () => {
+            console.log('[graphql query] obtener usuarios');
+            
+            if (usarMongoDB()) {
+                const db = getDB();
+                const usuarios = await db.collection('usuarios').find().toArray();
+                return usuarios.map(u => ({
+                    id: u.id,
+                    nombre: u.nombre,
+                    email: u.email,
+                    password: u.password,
+                    rol: u.rol
+                }));
+            } else {
+                return memoryDB.usuarios;
+            }
         },
         
         /**
-         * Obtiene un usuario por su email
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Argumentos { email }
-         * @returns {Object|null} Usuario encontrado o null
+         * obtiene un usuario por su email
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - argumentos { email }
+         * @returns {Object|null} usuario encontrado o null
          */
-        obtenerUsuario: (_, { email }) => {
-            console.log('[GraphQL Query] obtenerUsuario:', email);
-            return db.usuarios.find(u => u.email === email) || null;
+        obtenerUsuario: async (_, { email }) => {
+            console.log('[graphql query] obtener usuario:', email);
+            
+            if (usarMongoDB()) {
+                const db = getDB();
+                const usuario = await db.collection('usuarios').findOne({ email });
+                if (usuario) {
+                    return {
+                        id: usuario.id,
+                        nombre: usuario.nombre,
+                        email: usuario.email,
+                        password: usuario.password,
+                        rol: usuario.rol
+                    };
+                }
+                return null;
+            } else {
+                return memoryDB.usuarios.find(u => u.email === email) || null;
+            }
         },
         
         /**
-         * Obtiene todos los voluntariados
-         * @returns {Array} Lista de voluntariados
+         * obtiene todos los voluntariados
+         * @returns {Array} lista de voluntariados
          */
-        obtenerVoluntariados: () => {
-            console.log('[GraphQL Query] obtenerVoluntariados');
-            return db.voluntariados;
+        obtenerVoluntariados: async () => {
+            console.log('[graphql query] obtener voluntariados');
+            
+            if (usarMongoDB()) {
+                const db = getDB();
+                const voluntariados = await db.collection('voluntariados').find().toArray();
+                return voluntariados.map(v => ({
+                    id: v.id,
+                    titulo: v.titulo,
+                    email: v.email,
+                    fecha: v.fecha,
+                    descripcion: v.descripcion,
+                    tipo: v.tipo
+                }));
+            } else {
+                return memoryDB.voluntariados;
+            }
         },
         
         /**
-         * Obtiene un voluntariado por ID
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Argumentos { id }
-         * @returns {Object|null} Voluntariado encontrado o null
+         * obtiene un voluntariado por id
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - argumentos { id }
+         * @returns {Object|null} voluntariado encontrado o null
          */
-        obtenerVoluntariado: (_, { id }) => {
-            console.log('[GraphQL Query] obtenerVoluntariado:', id);
-            return db.voluntariados.find(v => v.id === id) || null;
+        obtenerVoluntariado: async (_, { id }) => {
+            console.log('[graphql query] obtener voluntariado:', id);
+            
+            if (usarMongoDB()) {
+                const db = getDB();
+                const voluntariado = await db.collection('voluntariados').findOne({ id: parseInt(id) });
+                if (voluntariado) {
+                    return {
+                        id: voluntariado.id,
+                        titulo: voluntariado.titulo,
+                        email: voluntariado.email,
+                        fecha: voluntariado.fecha,
+                        descripcion: voluntariado.descripcion,
+                        tipo: voluntariado.tipo
+                    };
+                }
+                return null;
+            } else {
+                return memoryDB.voluntariados.find(v => v.id === id) || null;
+            }
         },
         
         /**
-         * Obtiene voluntariados filtrados por tipo
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Argumentos { tipo }
-         * @returns {Array} Lista filtrada de voluntariados
+         * obtiene voluntariados filtrados por tipo
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - argumentos { tipo }
+         * @returns {Array} lista filtrada de voluntariados
          */
-        obtenerVoluntariadosPorTipo: (_, { tipo }) => {
-            console.log('[GraphQL Query] obtenerVoluntariadosPorTipo:', tipo);
-            return db.voluntariados.filter(v => v.tipo === tipo);
+        obtenerVoluntariadosPorTipo: async (_, { tipo }) => {
+            console.log('[graphql query] obtener por tipo:', tipo);
+            
+            if (usarMongoDB()) {
+                const db = getDB();
+                const voluntariados = await db.collection('voluntariados').find({ tipo }).toArray();
+                return voluntariados.map(v => ({
+                    id: v.id,
+                    titulo: v.titulo,
+                    email: v.email,
+                    fecha: v.fecha,
+                    descripcion: v.descripcion,
+                    tipo: v.tipo
+                }));
+            } else {
+                return memoryDB.voluntariados.filter(v => v.tipo === tipo);
+            }
         }
     },
     
-    // MUTATIONS - Operaciones de escritura
+    // mutations - operaciones de escritura
     Mutation: {
         
         /**
-         * Crea un nuevo usuario
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Datos del usuario { nombre, email, password, rol }
-         * @returns {Object} Usuario creado
-         * @throws {Error} Si el email ya existe
+         * crea un nuevo usuario
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - datos del usuario { nombre, email, password, rol }
+         * @returns {Object} usuario creado
+         * @throws {Error} si el email ya existe
          */
-        crearUsuario: (_, { nombre, email, password, rol }) => {
-            console.log('[GraphQL Mutation] crearUsuario:', email);
+        crearUsuario: async (_, { nombre, email, password, rol }) => {
+            console.log('[graphql mutation] crear usuario:', email);
             
-            // Validar que no exista el email
-            const existe = db.usuarios.find(u => u.email === email);
-            if (existe) {
-                throw new Error('El email ya está registrado');
-            }
-            
-            // Crear nuevo usuario
-            const nuevoUsuario = {
-                id: db.nextUsuarioId(),
-                nombre,
-                email,
-                password,
-                rol: rol || 'usuario'
-            };
-            
-            db.usuarios.push(nuevoUsuario);
-            
-            return nuevoUsuario;
-        },
-        
-        /**
-         * Elimina un usuario por email
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Argumentos { email }
-         * @returns {Object} Respuesta con ok y mensaje
-         * @throws {Error} Si el usuario no existe
-         */
-        borrarUsuario: (_, { email }) => {
-            console.log('[GraphQL Mutation] borrarUsuario:', email);
-            
-            const index = db.usuarios.findIndex(u => u.email === email);
-            
-            if (index === -1) {
-                throw new Error('Usuario no encontrado');
-            }
-            
-            db.usuarios.splice(index, 1);
-            
-            return {
-                ok: true,
-                mensaje: 'Usuario eliminado correctamente'
-            };
-        },
-        
-        /**
-         * Autentica un usuario (login)
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Credenciales { email, password }
-         * @returns {Object} Respuesta con ok, mensaje y usuario
-         */
-        loginUsuario: (_, { email, password }) => {
-            console.log('[GraphQL Mutation] loginUsuario:', email);
-            
-            const usuario = db.usuarios.find(u => 
-                u.email.toLowerCase() === email.toLowerCase()
-            );
-            
-            if (!usuario) {
+            if (usarMongoDB()) {
+                const db = getDB();
+                
+                const existe = await db.collection('usuarios').findOne({ email });
+                if (existe) {
+                    throw new Error('el email ya esta registrado');
+                }
+                
+                const ultimoUsuario = await db.collection('usuarios').find().sort({ id: -1 }).limit(1).toArray();
+                const nuevoId = ultimoUsuario.length > 0 ? ultimoUsuario[0].id + 1 : 1;
+                
+                const nuevoUsuario = {
+                    id: nuevoId,
+                    nombre,
+                    email,
+                    password,
+                    rol: rol || 'usuario',
+                    fechaCreacion: new Date()
+                };
+                
+                await db.collection('usuarios').insertOne(nuevoUsuario);
+                
                 return {
-                    ok: false,
-                    mensaje: 'Usuario no encontrado',
-                    usuario: null
+                    id: nuevoId,
+                    nombre,
+                    email,
+                    password,
+                    rol: rol || 'usuario'
+                };
+            } else {
+                const existe = memoryDB.usuarios.find(u => u.email === email);
+                if (existe) {
+                    throw new Error('el email ya esta registrado');
+                }
+                
+                const nuevoUsuario = {
+                    id: memoryDB.nextUsuarioId(),
+                    nombre,
+                    email,
+                    password,
+                    rol: rol || 'usuario'
+                };
+                
+                memoryDB.usuarios.push(nuevoUsuario);
+                return nuevoUsuario;
+            }
+        },
+        
+        /**
+         * elimina un usuario por email
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - argumentos { email }
+         * @returns {Object} respuesta con ok y mensaje
+         * @throws {Error} si el usuario no existe
+         */
+        borrarUsuario: async (_, { email }) => {
+            console.log('[graphql mutation] borrar usuario:', email);
+            
+            if (usarMongoDB()) {
+                const db = getDB();
+                const result = await db.collection('usuarios').deleteOne({ email });
+                
+                if (result.deletedCount === 0) {
+                    throw new Error('usuario no encontrado');
+                }
+                
+                return {
+                    ok: true,
+                    mensaje: 'usuario eliminado correctamente'
+                };
+            } else {
+                const index = memoryDB.usuarios.findIndex(u => u.email === email);
+                
+                if (index === -1) {
+                    throw new Error('usuario no encontrado');
+                }
+                
+                memoryDB.usuarios.splice(index, 1);
+                
+                return {
+                    ok: true,
+                    mensaje: 'usuario eliminado correctamente'
                 };
             }
-            
-            if (usuario.password !== password) {
-                return {
-                    ok: false,
-                    mensaje: 'Contraseña incorrecta',
-                    usuario: null
-                };
-            }
-            
-            return {
-                ok: true,
-                mensaje: 'Login exitoso',
-                usuario: usuario
-            };
         },
         
         /**
-         * Crea un nuevo voluntariado
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Datos del voluntariado
-         * @returns {Object} Voluntariado creado
-         * @throws {Error} Si faltan datos o el tipo es inválido
+         * autentica un usuario (login)
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - credenciales { email, password }
+         * @returns {Object} respuesta con ok, mensaje y usuario
          */
-        crearVoluntariado: (_, { titulo, email, fecha, descripcion, tipo }) => {
-            console.log('[GraphQL Mutation] crearVoluntariado:', titulo);
+        loginUsuario: async (_, { email, password }) => {
+            console.log('[graphql mutation] login usuario:', email);
             
-            // Validar tipo
+            if (usarMongoDB()) {
+                const db = getDB();
+                const usuario = await db.collection('usuarios').findOne({ 
+                    email: email.toLowerCase() 
+                });
+                
+                if (!usuario) {
+                    return {
+                        ok: false,
+                        mensaje: 'usuario no encontrado',
+                        usuario: null
+                    };
+                }
+                
+                if (usuario.password !== password) {
+                    return {
+                        ok: false,
+                        mensaje: 'contrasena incorrecta',
+                        usuario: null
+                    };
+                }
+                
+                return {
+                    ok: true,
+                    mensaje: 'login exitoso',
+                    usuario: {
+                        id: usuario.id,
+                        nombre: usuario.nombre,
+                        email: usuario.email,
+                        rol: usuario.rol
+                    }
+                };
+            } else {
+                const usuario = memoryDB.usuarios.find(u => 
+                    u.email.toLowerCase() === email.toLowerCase()
+                );
+                
+                if (!usuario) {
+                    return {
+                        ok: false,
+                        mensaje: 'usuario no encontrado',
+                        usuario: null
+                    };
+                }
+                
+                if (usuario.password !== password) {
+                    return {
+                        ok: false,
+                        mensaje: 'contrasena incorrecta',
+                        usuario: null
+                    };
+                }
+                
+                return {
+                    ok: true,
+                    mensaje: 'login exitoso',
+                    usuario: usuario
+                };
+            }
+        },
+        
+        /**
+         * crea un nuevo voluntariado
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - datos del voluntariado
+         * @returns {Object} voluntariado creado
+         * @throws {Error} si faltan datos o el tipo es invalido
+         */
+        crearVoluntariado: async (_, { titulo, email, fecha, descripcion, tipo }) => {
+            console.log('[graphql mutation] crear voluntariado:', titulo);
+            
             if (tipo !== 'Oferta' && tipo !== 'Petición') {
-                throw new Error('El tipo debe ser "Oferta" o "Petición"');
+                throw new Error('el tipo debe ser oferta o peticion');
             }
             
-            // Crear nuevo voluntariado
-            const nuevoVoluntariado = {
-                id: db.nextVoluntariadoId(),
-                titulo,
-                email,
-                fecha,
-                descripcion,
-                tipo
-            };
-            
-            db.voluntariados.push(nuevoVoluntariado);
-            
-            return nuevoVoluntariado;
+            if (usarMongoDB()) {
+                const db = getDB();
+                
+                const ultimoVoluntariado = await db.collection('voluntariados').find().sort({ id: -1 }).limit(1).toArray();
+                const nuevoId = ultimoVoluntariado.length > 0 ? ultimoVoluntariado[0].id + 1 : 1;
+                
+                const nuevoVoluntariado = {
+                    id: nuevoId,
+                    titulo,
+                    email,
+                    fecha,
+                    descripcion,
+                    tipo,
+                    fechaCreacion: new Date()
+                };
+                
+                await db.collection('voluntariados').insertOne(nuevoVoluntariado);
+                
+                return {
+                    id: nuevoId,
+                    titulo,
+                    email,
+                    fecha,
+                    descripcion,
+                    tipo
+                };
+            } else {
+                const nuevoVoluntariado = {
+                    id: memoryDB.nextVoluntariadoId(),
+                    titulo,
+                    email,
+                    fecha,
+                    descripcion,
+                    tipo
+                };
+                
+                memoryDB.voluntariados.push(nuevoVoluntariado);
+                return nuevoVoluntariado;
+            }
         },
         
         /**
-         * Elimina un voluntariado por ID
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - Argumentos { id }
-         * @returns {Object} Respuesta con ok y mensaje
-         * @throws {Error} Si el voluntariado no existe
+         * elimina un voluntariado por id
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - argumentos { id }
+         * @returns {Object} respuesta con ok y mensaje
+         * @throws {Error} si el voluntariado no existe
          */
-        borrarVoluntariado: (_, { id }) => {
-            console.log('[GraphQL Mutation] borrarVoluntariado:', id);
+        borrarVoluntariado: async (_, { id }) => {
+            console.log('[graphql mutation] borrar voluntariado:', id);
             
-            const index = db.voluntariados.findIndex(v => v.id === id);
-            
-            if (index === -1) {
-                throw new Error('Voluntariado no encontrado');
+            if (usarMongoDB()) {
+                const db = getDB();
+                const result = await db.collection('voluntariados').deleteOne({ id: parseInt(id) });
+                
+                if (result.deletedCount === 0) {
+                    throw new Error('voluntariado no encontrado');
+                }
+                
+                return {
+                    ok: true,
+                    mensaje: 'voluntariado eliminado correctamente'
+                };
+            } else {
+                const index = memoryDB.voluntariados.findIndex(v => v.id === id);
+                
+                if (index === -1) {
+                    throw new Error('voluntariado no encontrado');
+                }
+                
+                memoryDB.voluntariados.splice(index, 1);
+                
+                return {
+                    ok: true,
+                    mensaje: 'voluntariado eliminado correctamente'
+                };
             }
-            
-            db.voluntariados.splice(index, 1);
-            
-            return {
-                ok: true,
-                mensaje: 'Voluntariado eliminado correctamente'
-            };
         },
         
         /**
-         * Actualiza un voluntariado existente
-         * @param {Object} _ - Parent (no usado)
-         * @param {Object} args - ID y datos a actualizar
-         * @returns {Object} Voluntariado actualizado
-         * @throws {Error} Si el voluntariado no existe o el tipo es inválido
+         * actualiza un voluntariado existente
+         * @param {Object} _ - parent (no usado)
+         * @param {Object} args - id y datos a actualizar
+         * @returns {Object} voluntariado actualizado
+         * @throws {Error} si el voluntariado no existe o el tipo es invalido
          */
-        actualizarVoluntariado: (_, { id, titulo, email, fecha, descripcion, tipo }) => {
-            console.log('[GraphQL Mutation] actualizarVoluntariado:', id);
+        actualizarVoluntariado: async (_, { id, titulo, email, fecha, descripcion, tipo }) => {
+            console.log('[graphql mutation] actualizar voluntariado:', id);
             
-            const index = db.voluntariados.findIndex(v => v.id === id);
-            
-            if (index === -1) {
-                throw new Error('Voluntariado no encontrado');
-            }
-            
-            // Validar tipo si se está actualizando
             if (tipo && tipo !== 'Oferta' && tipo !== 'Petición') {
-                throw new Error('El tipo debe ser "Oferta" o "Petición"');
+                throw new Error('el tipo debe ser oferta o peticion');
             }
             
-            // Actualizar solo los campos proporcionados
-            const voluntarioActualizado = {
-                ...db.voluntariados[index],
-                ...(titulo && { titulo }),
-                ...(email && { email }),
-                ...(fecha && { fecha }),
-                ...(descripcion && { descripcion }),
-                ...(tipo && { tipo })
-            };
-            
-            db.voluntariados[index] = voluntarioActualizado;
-            
-            return voluntarioActualizado;
+            if (usarMongoDB()) {
+                const db = getDB();
+                
+                const actualizacion = {};
+                if (titulo) actualizacion.titulo = titulo;
+                if (email) actualizacion.email = email;
+                if (fecha) actualizacion.fecha = fecha;
+                if (descripcion) actualizacion.descripcion = descripcion;
+                if (tipo) actualizacion.tipo = tipo;
+                actualizacion.fechaModificacion = new Date();
+                
+                const result = await db.collection('voluntariados').findOneAndUpdate(
+                    { id: parseInt(id) },
+                    { $set: actualizacion },
+                    { returnDocument: 'after' }
+                );
+                
+                if (!result.value) {
+                    throw new Error('voluntariado no encontrado');
+                }
+                
+                return {
+                    id: result.value.id,
+                    titulo: result.value.titulo,
+                    email: result.value.email,
+                    fecha: result.value.fecha,
+                    descripcion: result.value.descripcion,
+                    tipo: result.value.tipo
+                };
+            } else {
+                const index = memoryDB.voluntariados.findIndex(v => v.id === id);
+                
+                if (index === -1) {
+                    throw new Error('voluntariado no encontrado');
+                }
+                
+                const voluntarioActualizado = {
+                    ...memoryDB.voluntariados[index],
+                    ...(titulo && { titulo }),
+                    ...(email && { email }),
+                    ...(fecha && { fecha }),
+                    ...(descripcion && { descripcion }),
+                    ...(tipo && { tipo })
+                };
+                
+                memoryDB.voluntariados[index] = voluntarioActualizado;
+                return voluntarioActualizado;
+            }
         }
     }
 };

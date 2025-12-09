@@ -28,7 +28,7 @@ export async function createApolloServer() {
     
     // Iniciar el servidor
     await server.start();
-    console.log('✅ Servidor Apollo GraphQL iniciado');
+    console.log('Servidor Apollo GraphQL iniciado');
     
     return server;
 }

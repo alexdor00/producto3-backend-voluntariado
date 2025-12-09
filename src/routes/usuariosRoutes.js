@@ -1,4 +1,3 @@
-// src/routes/usuariosRoutes.js
 
 import express from 'express';
 import { 
