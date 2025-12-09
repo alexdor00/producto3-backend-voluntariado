@@ -15,6 +15,26 @@ function usarMongoDB() {
     return isMongoConnected() && getDB() !== null;
 }
 
+/**
+ * verifica que el usuario este autenticado
+ * @param {Object} context - contexto de graphql con usuario
+ * @param {Boolean} requiereAdmin - si requiere rol de admin
+ * @throws {Error} si no esta autenticado o no es admin
+ * @returns {Object} usuario autenticado
+ */
+function verificarAuth(context, requiereAdmin = false) {
+    if (!context.usuario) {
+        throw new Error('no autenticado. debes iniciar sesion primero');
+    }
+    
+    if (requiereAdmin && context.usuario.rol !== 'admin') {
+        throw new Error('acceso denegado. se requiere rol de administrador');
+    }
+    
+    console.log('[graphql auth] usuario verificado:', context.usuario.email, '- rol:', context.usuario.rol);
+    return context.usuario;
+}
+
 export const resolvers = {
     
     // queries - operaciones de lectura
@@ -208,14 +228,18 @@ export const resolvers = {
         },
         
         /**
-         * elimina un usuario por email
+         * elimina un usuario por email (requiere rol admin)
          * @param {Object} _ - parent (no usado)
          * @param {Object} args - argumentos { email }
+         * @param {Object} context - contexto con usuario autenticado
          * @returns {Object} respuesta con ok y mensaje
-         * @throws {Error} si el usuario no existe
+         * @throws {Error} si el usuario no existe o no tiene permisos
          */
-        borrarUsuario: async (_, { email }) => {
+        borrarUsuario: async (_, { email }, context) => {
             console.log('[graphql mutation] borrar usuario:', email);
+            
+            // verificar autenticacion y rol admin
+            verificarAuth(context, true);
             
             if (usarMongoDB()) {
                 const db = getDB();
@@ -328,14 +352,18 @@ export const resolvers = {
         },
         
         /**
-         * crea un nuevo voluntariado
+         * crea un nuevo voluntariado (requiere autenticacion)
          * @param {Object} _ - parent (no usado)
          * @param {Object} args - datos del voluntariado
+         * @param {Object} context - contexto con usuario autenticado
          * @returns {Object} voluntariado creado
          * @throws {Error} si faltan datos o el tipo es invalido
          */
-        crearVoluntariado: async (_, { titulo, email, fecha, descripcion, tipo }) => {
+        crearVoluntariado: async (_, { titulo, email, fecha, descripcion, tipo }, context) => {
             console.log('[graphql mutation] crear voluntariado:', titulo);
+            
+            // verificar autenticacion
+            verificarAuth(context);
             
             if (tipo !== 'Oferta' && tipo !== 'Petición') {
                 throw new Error('el tipo debe ser oferta o peticion');
@@ -383,14 +411,18 @@ export const resolvers = {
         },
         
         /**
-         * elimina un voluntariado por id
+         * elimina un voluntariado por id (requiere autenticacion)
          * @param {Object} _ - parent (no usado)
          * @param {Object} args - argumentos { id }
+         * @param {Object} context - contexto con usuario autenticado
          * @returns {Object} respuesta con ok y mensaje
          * @throws {Error} si el voluntariado no existe
          */
-        borrarVoluntariado: async (_, { id }) => {
+        borrarVoluntariado: async (_, { id }, context) => {
             console.log('[graphql mutation] borrar voluntariado:', id);
+            
+            // verificar autenticacion
+            verificarAuth(context);
             
             if (usarMongoDB()) {
                 const db = getDB();
@@ -421,14 +453,18 @@ export const resolvers = {
         },
         
         /**
-         * actualiza un voluntariado existente
+         * actualiza un voluntariado existente (requiere autenticacion)
          * @param {Object} _ - parent (no usado)
          * @param {Object} args - id y datos a actualizar
+         * @param {Object} context - contexto con usuario autenticado
          * @returns {Object} voluntariado actualizado
          * @throws {Error} si el voluntariado no existe o el tipo es invalido
          */
-        actualizarVoluntariado: async (_, { id, titulo, email, fecha, descripcion, tipo }) => {
+        actualizarVoluntariado: async (_, { id, titulo, email, fecha, descripcion, tipo }, context) => {
             console.log('[graphql mutation] actualizar voluntariado:', id);
+            
+            // verificar autenticacion
+            verificarAuth(context);
             
             if (tipo && tipo !== 'Oferta' && tipo !== 'Petición') {
                 throw new Error('el tipo debe ser oferta o peticion');

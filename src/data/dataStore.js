@@ -12,7 +12,7 @@ let usuarios = [
         nombre: 'LAURA',
         email: 'L@A.U',
         password: '123',
-        rol: 'usuario'
+        rol: 'admin'
     },
     {
         id: 2,
