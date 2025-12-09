@@ -1,3 +1,4 @@
+// src/routes/usuariosRoutes.js
 
 import express from 'express';
 import { 
@@ -6,35 +7,36 @@ import {
     borrarUsuario, 
     loginUsuario 
 } from '../controllers/usuariosController.js';
+import { verificarAutenticacion, verificarAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
 /**
- * @route GET /api/usuarios
- * @description Obtener todos los usuarios
- * @access Public
+ * @route POST /api/usuarios/login
+ * @description autenticar usuario (login) y obtener token jwt
+ * @access public
  */
-router.get('/', obtenerUsuarios);
+router.post('/login', loginUsuario);
 
 /**
  * @route POST /api/usuarios
- * @description Crear un nuevo usuario
- * @access Public
+ * @description crear un nuevo usuario
+ * @access public
  */
 router.post('/', crearUsuario);
 
 /**
- * @route DELETE /api/usuarios/:email
- * @description Eliminar un usuario por email
- * @access Public
+ * @route GET /api/usuarios
+ * @description obtener todos los usuarios
+ * @access private (requiere token jwt)
  */
-router.delete('/:email', borrarUsuario);
+router.get('/', verificarAutenticacion, obtenerUsuarios);
 
 /**
- * @route POST /api/usuarios/login
- * @description Autenticar usuario (login)
- * @access Public
+ * @route DELETE /api/usuarios/:email
+ * @description eliminar un usuario por email
+ * @access private (requiere token jwt y rol admin)
  */
-router.post('/login', loginUsuario);
+router.delete('/:email', verificarAutenticacion, verificarAdmin, borrarUsuario);
 
 export default router;

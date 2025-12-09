@@ -1,10 +1,13 @@
+
+
 import { db } from '../data/dataStore.js';
+import { generarToken } from '../utils/jwt.js';
 
 /**
- * Obtiene todos los usuarios del sistema
- * @param {Object} req - Request de Express
- * @param {Object} res - Response de Express
- * @returns {Object} JSON con array de usuarios
+ * obtiene todos los usuarios del sistema
+ * @param {Object} req - request de express
+ * @param {Object} res - response de express
+ * @returns {Object} json con array de usuarios
  */
 export const obtenerUsuarios = (req, res) => {
     try {
@@ -16,40 +19,40 @@ export const obtenerUsuarios = (req, res) => {
     } catch (error) {
         res.status(500).json({
             ok: false,
-            mensaje: 'Error al obtener usuarios',
+            mensaje: 'error al obtener usuarios',
             error: error.message
         });
     }
 };
 
 /**
- * Crea un nuevo usuario en el sistema
- * @param {Object} req - Request con datos del usuario en body
- * @param {Object} res - Response de Express
- * @returns {Object} JSON con usuario creado
+ * crea un nuevo usuario en el sistema
+ * @param {Object} req - request con datos del usuario en body
+ * @param {Object} res - response de express
+ * @returns {Object} json con usuario creado
  */
 export const crearUsuario = (req, res) => {
     try {
         const { nombre, email, password, rol } = req.body;
         
-        // Validar datos
+        // validar datos
         if (!nombre || !email || !password) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Faltan datos obligatorios: nombre, email, password'
+                mensaje: 'faltan datos obligatorios: nombre, email, password'
             });
         }
         
-        // Verificar si el email ya existe
+        // verificar si el email ya existe
         const existe = db.usuarios.find(u => u.email === email);
         if (existe) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'El email ya está registrado'
+                mensaje: 'el email ya esta registrado'
             });
         }
         
-        // Crear usuario
+        // crear usuario
         const nuevoUsuario = {
             id: db.nextUsuarioId(),
             nombre,
@@ -62,24 +65,24 @@ export const crearUsuario = (req, res) => {
         
         res.status(201).json({
             ok: true,
-            mensaje: 'Usuario creado correctamente',
+            mensaje: 'usuario creado correctamente',
             usuario: nuevoUsuario
         });
         
     } catch (error) {
         res.status(500).json({
             ok: false,
-            mensaje: 'Error al crear usuario',
+            mensaje: 'error al crear usuario',
             error: error.message
         });
     }
 };
 
 /**
- * Elimina un usuario por su email
- * @param {Object} req - Request con email en params
- * @param {Object} res - Response de Express
- * @returns {Object} JSON confirmando la eliminación
+ * elimina un usuario por su email
+ * @param {Object} req - request con email en params
+ * @param {Object} res - response de express
+ * @returns {Object} json confirmando la eliminacion
  */
 export const borrarUsuario = (req, res) => {
     try {
@@ -90,7 +93,7 @@ export const borrarUsuario = (req, res) => {
         if (index === -1) {
             return res.status(404).json({
                 ok: false,
-                mensaje: 'Usuario no encontrado'
+                mensaje: 'usuario no encontrado'
             });
         }
         
@@ -98,24 +101,24 @@ export const borrarUsuario = (req, res) => {
         
         res.json({
             ok: true,
-            mensaje: 'Usuario eliminado correctamente',
+            mensaje: 'usuario eliminado correctamente',
             usuario: usuarioEliminado
         });
         
     } catch (error) {
         res.status(500).json({
             ok: false,
-            mensaje: 'Error al borrar usuario',
+            mensaje: 'error al borrar usuario',
             error: error.message
         });
     }
 };
 
 /**
- * Autentica un usuario (login)
- * @param {Object} req - Request con email y password en body
- * @param {Object} res - Response de Express
- * @returns {Object} JSON con datos del usuario autenticado
+ * autentica un usuario (login) y devuelve token jwt
+ * @param {Object} req - request con email y password en body
+ * @param {Object} res - response de express
+ * @returns {Object} json con datos del usuario autenticado y token
  */
 export const loginUsuario = (req, res) => {
     try {
@@ -124,7 +127,7 @@ export const loginUsuario = (req, res) => {
         if (!email || !password) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Email y contraseña son obligatorios'
+                mensaje: 'email y contrasena son obligatorios'
             });
         }
         
@@ -135,20 +138,24 @@ export const loginUsuario = (req, res) => {
         if (!usuario) {
             return res.status(404).json({
                 ok: false,
-                mensaje: 'Usuario no encontrado'
+                mensaje: 'usuario no encontrado'
             });
         }
         
         if (usuario.password !== password) {
             return res.status(401).json({
                 ok: false,
-                mensaje: 'Contraseña incorrecta'
+                mensaje: 'contrasena incorrecta'
             });
         }
         
+        // generar token jwt
+        const token = generarToken(usuario);
+        
         res.json({
             ok: true,
-            mensaje: 'Login exitoso',
+            mensaje: 'login exitoso',
+            token: token,
             usuario: {
                 id: usuario.id,
                 nombre: usuario.nombre,
@@ -160,7 +167,7 @@ export const loginUsuario = (req, res) => {
     } catch (error) {
         res.status(500).json({
             ok: false,
-            mensaje: 'Error en el login',
+            mensaje: 'error en el login',
             error: error.message
         });
     }

@@ -32,10 +32,11 @@ export const typeDefs = `#graphql
     mensaje: String!
   }
 
-  # respuesta de login con datos del usuario
+  # respuesta de login con datos del usuario y token jwt
   type RespuestaLogin {
     ok: Boolean!
     mensaje: String!
+    token: String
     usuario: Usuario
   }
 

@@ -3,6 +3,7 @@
 import { getDB, isMongoConnected } from '../config/database.js';
 import { ObjectId } from 'mongodb';
 import { db as memoryDB } from '../data/dataStore.js';
+import { generarToken } from '../utils/jwt.js';
 
 /**
  * resolvers de graphql - implementan la logica de negocio
@@ -245,10 +246,10 @@ export const resolvers = {
         },
         
         /**
-         * autentica un usuario (login)
+         * autentica un usuario (login) y devuelve token jwt
          * @param {Object} _ - parent (no usado)
          * @param {Object} args - credenciales { email, password }
-         * @returns {Object} respuesta con ok, mensaje y usuario
+         * @returns {Object} respuesta con ok, mensaje, token y usuario
          */
         loginUsuario: async (_, { email, password }) => {
             console.log('[graphql mutation] login usuario:', email);
@@ -263,6 +264,7 @@ export const resolvers = {
                     return {
                         ok: false,
                         mensaje: 'usuario no encontrado',
+                        token: null,
                         usuario: null
                     };
                 }
@@ -271,13 +273,18 @@ export const resolvers = {
                     return {
                         ok: false,
                         mensaje: 'contrasena incorrecta',
+                        token: null,
                         usuario: null
                     };
                 }
                 
+                // generar token jwt
+                const token = generarToken(usuario);
+                
                 return {
                     ok: true,
                     mensaje: 'login exitoso',
+                    token: token,
                     usuario: {
                         id: usuario.id,
                         nombre: usuario.nombre,
@@ -294,6 +301,7 @@ export const resolvers = {
                     return {
                         ok: false,
                         mensaje: 'usuario no encontrado',
+                        token: null,
                         usuario: null
                     };
                 }
@@ -302,13 +310,18 @@ export const resolvers = {
                     return {
                         ok: false,
                         mensaje: 'contrasena incorrecta',
+                        token: null,
                         usuario: null
                     };
                 }
                 
+                // generar token jwt
+                const token = generarToken(usuario);
+                
                 return {
                     ok: true,
                     mensaje: 'login exitoso',
+                    token: token,
                     usuario: usuario
                 };
             }

@@ -1,3 +1,5 @@
+// src/routes/voluntariadosRoutes.js
+
 import express from 'express';
 import { 
     obtenerVoluntariados, 
@@ -5,36 +7,37 @@ import {
     borrarVoluntariado,
     obtenerVoluntariadosPorTipo
 } from '../controllers/voluntariadosController.js';
+import { verificarAutenticacion } from '../middleware/auth.js';
 
 const router = express.Router();
 
 /**
  * @route GET /api/voluntariados
- * @description Obtener todos los voluntariados
- * @access Public
+ * @description obtener todos los voluntariados
+ * @access public
  */
 router.get('/', obtenerVoluntariados);
 
 /**
  * @route GET /api/voluntariados/tipo
- * @description Obtener voluntariados filtrados por tipo (Oferta/Petición)
- * @query tipo - Oferta o Petición
- * @access Public
+ * @description obtener voluntariados filtrados por tipo (oferta/peticion)
+ * @query tipo - oferta o peticion
+ * @access public
  */
 router.get('/tipo', obtenerVoluntariadosPorTipo);
 
 /**
  * @route POST /api/voluntariados
- * @description Crear un nuevo voluntariado
- * @access Public
+ * @description crear un nuevo voluntariado
+ * @access private (requiere token jwt)
  */
-router.post('/', crearVoluntariado);
+router.post('/', verificarAutenticacion, crearVoluntariado);
 
 /**
  * @route DELETE /api/voluntariados/:id
- * @description Eliminar un voluntariado por ID
- * @access Public
+ * @description eliminar un voluntariado por id
+ * @access private (requiere token jwt)
  */
-router.delete('/:id', borrarVoluntariado);
+router.delete('/:id', verificarAutenticacion, borrarVoluntariado);
 
 export default router;
