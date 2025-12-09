@@ -281,7 +281,7 @@ export const resolvers = {
             if (usarMongoDB()) {
                 const db = getDB();
                 const usuario = await db.collection('usuarios').findOne({ 
-                    email: email.toLowerCase() 
+                    email: email
                 });
                 
                 if (!usuario) {
@@ -318,7 +318,7 @@ export const resolvers = {
                 };
             } else {
                 const usuario = memoryDB.usuarios.find(u => 
-                    u.email.toLowerCase() === email.toLowerCase()
+                    u.email === email
                 );
                 
                 if (!usuario) {
