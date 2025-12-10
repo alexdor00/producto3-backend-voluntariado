@@ -2,165 +2,183 @@
 
 Backend completo con Express REST API, GraphQL y MongoDB Atlas para gestión de voluntariados.
 
-## 🔗 Enlaces del Proyecto
+## Enlaces del Proyecto
 
 - **GitHub:** https://github.com/alexdor00/producto3-backend-voluntariado
-- **CodeSandbox:** https://codesandbox.io/p/sandbox/github/alexdor00/producto3-backend-voluntariado
+- **CodeSandbox:** https://codesandbox.io/p/sandbox/github/alexdor00/producto3-backend-voluntariado/tree/main
 
-##  Descripción
+## Instrucciones para corrección
 
-Sistema backend para gestión de voluntariados que implementa:
-- API REST con Express
-- API GraphQL con Apollo Server
-- Persistencia en MongoDB Atlas
-- Autenticación JWT
-- Sistema dual (Atlas + memoria como fallback)
+### Usar CodeSandbox (recomendado)
 
-## Tecnologías Utilizadas
+**URL del proyecto:** https://6flhwn-4000.csb.app/
 
-- **Node.js** v18+
-- **Express** v4.18.2 - Framework web
-- **Apollo Server** v4.9.5 - Servidor GraphQL
-- **MongoDB** v6.3.0 - Base de datos NoSQL
-- **JSON Web Token** v9.0.2 - Autenticación
-- **dotenv** v16.3.1 - Variables de entorno
+Si la URL no funciona, abrir el enlace de CodeSandbox de arriba y copiar la URL que aparece (formato: https://xxxxx-4000.csb.app). Las variables de entorno ya están configuradas.
 
-## Estructura del Proyecto
-
-producto3-backend-voluntariado/
-├── src/
-│   ├── config/
-│   │   └── database.js           # Conexión MongoDB Atlas
-│   ├── controllers/
-│   │   ├── usuariosController.js # Lógica REST usuarios
-│   │   └── voluntariadosController.js # Lógica REST voluntariados
-│   ├── data/
-│   │   └── dataStore.js          # Datos en memoria (fallback)
-│   ├── graphql/
-│   │   ├── apolloServer.js       # Configuración Apollo
-│   │   ├── typeDefs.js           # Esquema GraphQL
-│   │   └── resolvers.js          # Resolvers GraphQL
-│   ├── middleware/
-│   │   └── auth.js               # Verificación JWT
-│   ├── routes/
-│   │   ├── usuariosRoutes.js     # Rutas REST usuarios
-│   │   └── voluntariadosRoutes.js # Rutas REST voluntariados
-│   ├── utils/
-│   │   └── jwt.js                # Funciones JWT
-│   └── index.js                  # Punto de entrada
-├── .env                          # Variables de entorno
-├── .gitignore
-├── package.json
-├── docker-compose.yml            # MongoDB local (opcional)
-└── README.md
-
-
-##  Instalación
-
-### 1. Clonar el repositorio
+### Ejecutar en local
+```
 git clone https://github.com/alexdor00/producto3-backend-voluntariado.git
 cd producto3-backend-voluntariado
+npm install
+npm start
 ```
 
-### 2. Instalar dependencias
-npm install
+Crear archivo `.env` con las variables indicadas más abajo.
 
-### 3. Configurar variables de entorno
+## Pruebas rápidas con Postman
 
-Crear archivo `.env` en la raíz:
-properties
-PORT=4000
-
-# MongoDB Atlas
-MONGODB_URI=mongodb+srv://admin:adminadmin123@cluster0.gg8lavx.mongodb.net/voluntariadosDB?retryWrites=true&w=majority&appName=Cluster0
-
-# JWT
-JWT_SECRET=mi_clave_super_secreta_voluntariados_2024
-JWT_EXPIRATION=24h
-
-
-### 4. Iniciar servidor
-
-npm start
-
-
-El servidor iniciará en: `http://localhost:4000`
-
-##  Endpoints Disponibles
-
-### GraphQL API
-
-**URL:** `http://localhost:4000/graphql`
-
-**Queries disponibles:**
-- `obtenerUsuarios` - Lista todos los usuarios
-- `obtenerUsuario(email: String!)` - Obtiene un usuario por email
-- `obtenerVoluntariados` - Lista todos los voluntariados
-- `obtenerVoluntariado(id: Int!)` - Obtiene un voluntariado por ID
-- `obtenerVoluntariadosPorTipo(tipo: String!)` - Filtra por tipo (Oferta/Petición)
-
-**Mutations disponibles:**
-- `crearUsuario(nombre, email, password, rol)` - Crea nuevo usuario (público)
-- `loginUsuario(email, password)` - Login y obtención de token JWT (público)
-- `crearVoluntariado(...)` - Crea voluntariado (requiere token)
-- `borrarVoluntariado(id)` - Elimina voluntariado (requiere token)
-- `actualizarVoluntariado(...)` - Actualiza voluntariado (requiere token)
-- `borrarUsuario(email)` - Elimina usuario (requiere token admin)
-
-### REST API
-
-**Base URL:** `http://localhost:4000/api`
-
-#### Usuarios
-- `GET /api/usuarios` - Obtener todos (público)
-- `POST /api/usuarios` - Crear usuario (público)
-- `POST /api/usuarios/login` - Login (público)
-- `DELETE /api/usuarios/:email` - Eliminar usuario (requiere admin)
-
-#### Voluntariados
-- `GET /api/voluntariados` - Obtener todos (público)
-- `GET /api/voluntariados/tipo?tipo=Oferta` - Filtrar por tipo (público)
-- `POST /api/voluntariados` - Crear voluntariado (requiere token)
-- `DELETE /api/voluntariados/:id` - Eliminar voluntariado (requiere token)
-
-##  Autenticación JWT
-
-### Obtener token (REST):
-
-POST http://localhost:4000/api/usuarios/login
+### 1. Login para obtener token
+```
+POST [URL]/api/usuarios/login
 Content-Type: application/json
 
 {
   "email": "L@A.U",
   "password": "123"
 }
+```
 
+Copiar el token de la respuesta.
 
-### Obtener token (GraphQL):
-```graphql
-mutation {
-  loginUsuario(email: "L@A.U", password: "123") {
-    ok
-    token
-    usuario {
-      nombre
-      rol
-    }
-  }
+### 2. Ver voluntariados (sin token)
+```
+GET [URL]/api/voluntariados
+```
+
+### 3. Crear voluntariado (con token)
+```
+POST [URL]/api/voluntariados
+Content-Type: application/json
+Authorization: Bearer [TOKEN]
+
+{
+  "titulo": "PRUEBA",
+  "email": "L@A.U",
+  "fecha": "2025-12-20",
+  "descripcion": "Probando",
+  "tipo": "Oferta"
 }
+```
 
+### 4. GraphQL
+```
+POST [URL]/graphql
+Content-Type: application/json
 
-### Usar token en peticiones:
+{
+  "query": "{ obtenerVoluntariados { id titulo email tipo } }"
+}
+```
 
-**REST:**
+### 5. Verificar persistencia
 
-Authorization: Bearer <tu_token_aqui>
+Reiniciar el servidor y repetir el paso 2. Si los datos siguen ahí, MongoDB Atlas funciona.
 
-**GraphQL:**
-Header: Authorization: Bearer <tu_token_aqui>
+## Descripción
 
+Sistema backend que implementa:
+- API REST con Express
+- API GraphQL con Apollo Server
+- Persistencia en MongoDB Atlas
+- Autenticación JWT
+- Sistema dual (Atlas + memoria como fallback)
 
-##  Usuarios de Prueba
+## Tecnologías
+
+- Node.js v18+
+- Express v4.18.2
+- Apollo Server v4.9.5
+- MongoDB v6.3.0
+- JSON Web Token v9.0.2
+- dotenv v16.3.1
+
+## Estructura del proyecto
+```
+producto3-backend-voluntariado/
+├── src/
+│   ├── config/
+│   │   └── database.js
+│   ├── controllers/
+│   │   ├── usuariosController.js
+│   │   └── voluntariadosController.js
+│   ├── data/
+│   │   └── dataStore.js
+│   ├── graphql/
+│   │   ├── apolloServer.js
+│   │   ├── typeDefs.js
+│   │   └── resolvers.js
+│   ├── middleware/
+│   │   └── auth.js
+│   ├── routes/
+│   │   ├── usuariosRoutes.js
+│   │   └── voluntariadosRoutes.js
+│   ├── utils/
+│   │   └── jwt.js
+│   └── index.js
+├── .env
+├── package.json
+└── README.md
+```
+
+## Configuración
+
+### Variables de entorno (.env)
+```
+PORT=4000
+MONGODB_URI=mongodb+srv://admin:adminadmin123@cluster0.gg8lavx.mongodb.net/voluntariadosDB?retryWrites=true&w=majority&appName=Cluster0
+JWT_SECRET=mi_clave_super_secreta_voluntariados_2024_cambiar_en_produccion
+JWT_EXPIRATION=24h
+```
+
+### En CodeSandbox
+
+Ir a Settings → Env Variables y añadir las variables de arriba.
+
+## Endpoints
+
+### GraphQL API
+
+URL: `[URL]/graphql`
+
+Queries:
+- `obtenerUsuarios`
+- `obtenerUsuario(email: String!)`
+- `obtenerVoluntariados`
+- `obtenerVoluntariado(id: Int!)`
+- `obtenerVoluntariadosPorTipo(tipo: String!)`
+
+Mutations:
+- `crearUsuario(nombre, email, password, rol)`
+- `loginUsuario(email, password)`
+- `crearVoluntariado(...)`
+- `borrarVoluntariado(id)`
+- `actualizarVoluntariado(...)`
+- `borrarUsuario(email)`
+
+### REST API
+
+URL base: `[URL]/api`
+
+Usuarios:
+- `GET /api/usuarios`
+- `POST /api/usuarios`
+- `POST /api/usuarios/login`
+- `DELETE /api/usuarios/:email`
+
+Voluntariados:
+- `GET /api/voluntariados`
+- `GET /api/voluntariados/tipo?tipo=Oferta`
+- `POST /api/voluntariados`
+- `DELETE /api/voluntariados/:id`
+
+## Autenticación
+
+Para rutas protegidas incluir header:
+```
+Authorization: Bearer [token]
+```
+
+## Usuarios de prueba
 
 | Email | Password | Rol |
 |-------|----------|-----|
@@ -168,103 +186,46 @@ Header: Authorization: Bearer <tu_token_aqui>
 | M@R.C | 123 | usuario |
 | S@O.N | 123 | usuario |
 
-
-
 ## MongoDB Atlas
 
-### Conexión
+- Cluster: cluster0.gg8lavx.mongodb.net
+- Base de datos: voluntariadosDB
+- Colecciones: usuarios, voluntariados
 
-El proyecto está configurado para usar MongoDB Atlas:
+El proyecto tiene un sistema dual: si MongoDB Atlas no está disponible, usa memoria como respaldo.
 
-- **Cluster:** cluster0.gg8lavx.mongodb.net
-- **Base de datos:** voluntariadosDB
-- **Colecciones:** usuarios, voluntariados
-- **Acceso:** Configurado para cualquier IP (0.0.0.0/0)
+## Ejemplos Postman
 
-### Sistema Dual
+### Login y crear voluntariado
+```
+1. POST [URL]/api/usuarios/login
+   Body: {"email": "L@A.U", "password": "123"}
 
-El proyecto implementa un sistema dual:
-- **Primario:** MongoDB Atlas (persistencia en nube)
-- **Fallback:** Memoria (arrays) si Atlas no está disponible
+2. Copiar token
 
-javascript
-if (usarMongoDB()) {
-    // Usar MongoDB Atlas
-} else {
-    // Usar memoria (dataStore.js)
-}
+3. POST [URL]/api/voluntariados
+   Authorization: Bearer [token]
+   Body: {"titulo": "AYUDA", "email": "L@A.U", "fecha": "2025-12-20", "descripcion": "Ayuda", "tipo": "Oferta"}
 ```
 
-##  Docker (Opcional)
-
-Para usar MongoDB local con Docker:
-
-docker-compose up -d
-
-
-Luego cambiar en `.env`:
-
-MONGODB_URI=mongodb://admin:admin123@localhost:27017/voluntariadosDB?authSource=admin
-
-
-## Probar con Postman
-
-### Ejemplo 1: Login y crear voluntariado
-
-**1. Login:**
-POST http://localhost:4000/api/usuarios/login
-Body: {"email": "L@A.U", "password": "123"}
-
-
-**2. Copiar token de la respuesta**
-
-**3. Crear voluntariado:**
-
-POST http://localhost:4000/api/voluntariados
-Headers: Authorization: Bearer <token>
-Body: {
-  "titulo": "OFREZCO AYUDA",
-  "email": "L@A.U",
-  "fecha": "2025-12-20",
-  "descripcion": "Ayuda con mascotas",
-  "tipo": "Oferta"
-}
-
-
-### Ejemplo 2: Query GraphQL
-graphql
-query {
-  obtenerVoluntariados {
-    id
-    titulo
-    email
-    tipo
-    descripcion
-  }
-}
+### Query GraphQL
+```
+POST [URL]/graphql
+Body: {"query": "{ obtenerVoluntariados { id titulo email tipo } }"}
 ```
 
-##  Verificación de Persistencia
+### Mutation GraphQL
+```
+POST [URL]/graphql
+Authorization: Bearer [token]
+Body: {"query": "mutation { crearVoluntariado(titulo: \"Test\", email: \"L@A.U\", fecha: \"2025-12-25\", descripcion: \"Test\", tipo: \"Oferta\") { ok mensaje } }"}
+```
 
-Para verificar que los datos persisten en Atlas:
+## Notas
 
-1. Crear un usuario/voluntariado
-2. Reiniciar el servidor (`Ctrl+C` y `npm start`)
-3. Consultar los datos de nuevo
-4. Si persisten → está usando Atlas 
-
-También puedes verificar en MongoDB Atlas web:
-https://cloud.mongodb.com → Browse Collections
-
-## ⚠️ Notas Importantes
-
-- El puerto por defecto es `4000` (configurable en `.env`)
-- Las credenciales de MongoDB Atlas están incluidas para evaluación
-- En producción, usar variables de entorno seguras
-- El JWT expira en 24 horas
-- Los datos en memoria se pierden al reiniciar (fallback)
+- Puerto por defecto: 4000
+- JWT expira en 24 horas
+- Credenciales incluidas para evaluación
+- La URL de CodeSandbox puede cambiar
 
 
-##  Licencia
-
-Este proyecto es de uso académico.
