@@ -1,4 +1,3 @@
-// src/routes/usuariosRoutes.js
 
 import express from 'express';
 import { 
@@ -28,9 +27,9 @@ router.post('/', crearUsuario);
 /**
  * @route GET /api/usuarios
  * @description obtener todos los usuarios
- * @access private (requiere token jwt)
+ * @access public (sin token)
  */
-router.get('/', verificarAutenticacion, obtenerUsuarios);
+router.get('/', obtenerUsuarios);
 
 /**
  * @route DELETE /api/usuarios/:email
